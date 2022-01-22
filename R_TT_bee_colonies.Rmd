@@ -125,5 +125,18 @@ months %>%
 months %>%
   count(months)
 
+
+colony %>%
+  filter(state %in% c("Georgia", "Mississippi", "Wisconsin", 
+                       "Oregon", "New York", "Minnesota")) %>%
+  mutate(state = fct_reorder(state, -colony_max, na.rm = TRUE)) %>%
+  ggplot(aes(colony_n, state)) +
+  geom_boxplot() +
+  theme_hc() +
+  labs(x = "Number of colonies",
+       y = "",
+       title = "Number of bee colonies per state") +
+  scale_x_continuous(labels = comma) +
+  expand_limits(x = 0)
 ```
 
