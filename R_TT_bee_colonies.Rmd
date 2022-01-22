@@ -1,0 +1,129 @@
+---
+title: "Bee Colonies"
+author: "Jeff Grayum"
+date: "1/13/2022"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries.
+```{r}
+library(tidyverse)
+library(tidytuesdayR)
+library(scales)
+library(ggthemes)
+```
+
+
+Loading dataset.
+```{r}
+tuesdata <- tidytuesdayR::tt_load('2022-01-11')
+
+colony <- tuesdata$colony
+
+stressor <- tuesdata$stressor
+```
+
+Initial look.
+```{r}
+colony %>%
+  view()
+
+mean_colonies <- colony %>%
+  group_by(state, year) %>%
+  summarize(mean_colonies = mean(colony_n, na.rm = TRUE),
+            mean_lost = mean(colony_lost, na.rm = TRUE),
+            mean_added = mean(colony_added, na.rm = TRUE)) %>%
+  arrange(year)
+
+mean_colonies %>%
+  view()
+
+mean_colonies %>%
+  filter(state %in% c("Georgia", "Mississippi", "Arizona", "Missouri")) %>%
+  ggplot(aes(year, mean_colonies, color = state)) +
+  geom_line() +
+  labs(x = "Year",
+       y = "Mean # of bee colonies",
+       title = "Mean number of bee colonies in Georgia, Mississippi, and Arizona",
+       color = "State") +
+  theme_tufte() +
+  scale_y_continuous(labels = comma_format()) +
+  expand_limits(y = 0)
+
+states <- colony %>%
+  filter(state %in% c("Georgia", "Mississippi", "Missouri", 
+                      "Oregon", "New York", "Minnesota")) %>%
+  group_by(months, state) %>%
+  summarize(mean_added = mean(colony_added, na.rm = TRUE),
+            mean_lost = mean(colony_lost, na.rm = TRUE),
+            mean_colony = mean(colony_n, na.rm = TRUE)) 
+ 
+
+states %>%
+  ggplot(aes(months, mean_added, fill = state)) +
+  geom_col() +
+  labs(x = "",
+       y = "Colonies added", 
+       fill = "",
+       title = "What time of year are bee colonies added to the population?") +
+  theme_hc() +
+  facet_wrap(~ state) +
+  theme(legend.position = "none") +
+  scale_y_continuous(labels = comma_format())
+
+states %>%
+  ggplot(aes(months, mean_lost, fill = state)) +
+  geom_col() +
+  labs(x = "",
+       y = "Colonies added", 
+       fill = "",
+       title = "What time of year are bee colonies lost?") +
+  theme_hc() +
+  facet_wrap(~ state) +
+  theme(legend.position = "none") +
+  scale_y_continuous(labels = comma_format())
+
+states %>%
+  ggplot(aes(months, mean_colony, fill = state)) +
+  geom_col() +
+  labs(x = "",
+       y = "Colonies added", 
+       fill = "",
+       title = "What time of year has the most bee colonies?") +
+  theme_hc() +
+  facet_wrap(~ state) +
+  theme(legend.position = "none") +
+  scale_y_continuous(labels = comma_format())
+
+months <- colony %>%
+  mutate(months = as.factor(months)) %>%
+  filter(state %in% c("Georgia", "Mississippi", "Arizona", "Missouri", "New York", "Minnesota")) %>%
+  group_by(state, months) %>%
+  summarize(mediab_num_col_months = median(colony_n, na.rm = TRUE)) %>%
+  view()
+
+months %>%
+  mutate(months = fct_reorder(months, c("January-March", "April-June", 
+                                       "July-September", "October-December"))) %>%
+  ggplot(aes(months, mediab_num_col_months, fill = months)) +
+  geom_col() +
+  theme_fivethirtyeight() +
+  labs(x = "",
+       y = "Total colonies",
+       title = "Which months have the highest medain number of colonies?") +
+  facet_wrap(~ state, scales = "free") +
+  scale_y_continuous(labels = comma) +
+  theme(legend.position = "none",
+        axis.title.x = element_blank())
+  
+months %>%
+  count(months)
+
+```
+
